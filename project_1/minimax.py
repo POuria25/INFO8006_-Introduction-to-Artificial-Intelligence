@@ -7,16 +7,21 @@ class PacmanAgent(Agent):
         super().__init__()
 
     def get_action(self, state):
-        """Gives the best pacman action for the current state."""
+        """Gives the best pacman action for the current state.
+
+        Arguments:
+            state: a game state.
+
+        Returns:
+            The next legal best action to take.
+        """
         
         best_score = float('-inf')
         best_action = None
         visited_states = set()
         
-        for action in state.getLegalActions(0):  # Pacman is at index 0
-            successor_state = state.generateSuccessor(0, action)
+        for successor_state, action in state.generatePacmanSuccessors():
             state_key = self.key(successor_state)
-            
             if state_key not in visited_states:
                 visited_states.add(state_key)
                 score = self.minimax(successor_state, agent_index=1, visited_states=visited_states)
@@ -70,7 +75,7 @@ class PacmanAgent(Agent):
             state: a game state.
 
         Returns:
-            A hashable key tuple representing the unique state.
+            A hashable key 3-tuple representing the unique state.
         """
         pacmanPos = state.getPacmanPosition()
         ghostPos = tuple(state.getGhostPosition(i) for i in range(1, state.getNumAgents()))
