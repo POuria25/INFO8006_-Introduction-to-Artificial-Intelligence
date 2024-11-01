@@ -86,9 +86,11 @@ class PacmanAgent(Agent):
         pacman_pos = state.getPacmanPosition()
         foods_list = state.getFood().asList()
         distance = set()
+        food_dist = 0
         for food_pos in foods_list:
             distance.add(manhattanDistance(pacman_pos, food_pos))
-        food_dist = min(distance)
+        if len(distance) != 0:
+            food_dist = min(distance)
         ghost_pos = state.getGhostPosition(1)
         ghost_dist = manhattanDistance(pacman_pos, ghost_pos)
         # Higher score for being far from ghosts, close to food,
