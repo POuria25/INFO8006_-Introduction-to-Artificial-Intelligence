@@ -3,27 +3,25 @@ from pacman_module.util import manhattanDistance
 
 
 class PacmanAgent(Agent):
-    """Pacman agent implementing H-Minimax with alpha-beta
-        pruning and heuristic evaluation."""
+    """Pacman agent implementing H-Minimax with heuristic evaluation."""
 
     def __init__(self):
         """Initialize the agent with a depth limit for H-Minimax."""
         super().__init__()
-        self.depth = 3  # Depth limit for the H-Minimax search
+        self.depth = 5  # Depth limit for the H-Minimax search
+        self.taken_path = {}  # Dictionary of the path taken and its weight
 
     def get_action(self, state):
         """Returns the best action for Pacman in the current state."""
         best_score = float('-inf')
         best_action = None
-        alpha = float('-inf')
-        beta = float('inf')
         visited_states = set()
         for successor_state, action in state.generatePacmanSuccessors():
             state_key = self.key(successor_state)
 
             if state_key not in visited_states:
                 visited_states.add(state_key)
-                score = self.hminimax(successor_state, agent_index=1,
+                score = self.hminimax(successor_state, agent_index=0,
                                       depth=self.depth - 1,
                                       visited_states=visited_states)
                 visited_states.remove(state_key)
@@ -31,18 +29,19 @@ class PacmanAgent(Agent):
                 if score > best_score:
                     best_score = score
                     best_action = action
-
+                    if state_key[0] not in self.taken_path:
+                        self.taken_path[state_key[0]] = 1
+                    else:
+                        self.taken_path[state_key[0]] *= 2
         return best_action
 
     def hminimax(self, state, agent_index, depth, visited_states):
-        """Heuristic Minimax function with alpha-beta pruning.
+        """Heuristic Minimax function.
 
         Arguments:
             state: the game state.
             agent_index: current agent's index (0 for Pacman, > 0 for ghosts).
             depth: remaining depth for exploration.
-            alpha: alpha value for alpha-beta pruning.
-            beta: beta value for alpha-beta pruning.
             visited_states: a set of already visited state keys.
 
         Returns:
@@ -57,18 +56,18 @@ class PacmanAgent(Agent):
                 key = self.key(successor)
                 if key not in visited_states:
                     visited_states.add(key)
-                    score = max(score, self.hminimax(successor, 1,
+                    score = max(score, self.hminimax(successor, agent_index,
                                 depth - 1, visited_states))
                     visited_states.remove(key)
             return score
 
         else:  # Ghosts
             score = float('inf')
-            for successor, _ in state.generateGhostSuccessors(agent_index):
+            for successor, _ in state.generateGhostSuccessors(1):
                 key = self.key(successor)
                 if key not in visited_states:
                     visited_states.add(key)
-                    score = min(score, self.hminimax(successor, 0,
+                    score = min(score, self.hminimax(successor, agent_index,
                                 depth - 1, visited_states))
                     visited_states.remove(key)
             return score
@@ -98,6 +97,9 @@ class PacmanAgent(Agent):
         score = state.getScore()
         heuristic_value = score + (
                             1.0 / (food_dist + 1)) - (1.0 / (ghost_dist + 1))
+        # Penalise the agent for returning to a previous case in the path
+        if pacman_pos in self.taken_path:
+            heuristic_value -= self.taken_path[pacman_pos]
         return heuristic_value
 
     def key(self, state):
