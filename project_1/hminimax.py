@@ -16,9 +16,6 @@ class PacmanAgent(Agent):
         best_action = None
         for successor_state, action in state.generatePacmanSuccessors():
             state_key = self.key(successor_state)
-            if state_key not in self.path_penality:
-                self.path_penality[state_key] = 0
-            self.path_penality[state_key] += 1
 
             score = self.hminimax(successor_state,
                                   agent_index=1, depth=self.depth - 1)
@@ -27,6 +24,12 @@ class PacmanAgent(Agent):
             if score >= best_score:
                 best_score = score
                 best_action = action
+                best_path = state_key
+
+        if best_path not in self.path_penality:
+            self.path_penality[best_path] = 0
+        self.path_penality[best_path] += 1
+
         return best_action
 
     def hminimax(self, state, agent_index, depth):
@@ -65,6 +68,35 @@ class PacmanAgent(Agent):
 
                 score = min(score, self.hminimax(successor, 0, depth - 1))
             return score
+
+    def shortest_path(state, goal_pos):
+        """Returns the shortest path from the current position to the goal.
+
+        Arguments:
+            state: a game state.
+            goal_pos: the goal position.
+
+        Returns:
+            A list of actions representing the shortest path to the goal.
+        """
+        pacman_pos = state.getPacmanPosition()
+        walls = state.getWalls().asList()
+        cost = None
+        visited = set()
+        fringe = [(pacman_pos, [])]
+
+        while fringe:
+            pos, actions = fringe.pop(0)
+            if pos == goal_pos:
+                return cost
+            if pos in visited:
+                continue
+            visited.add(pos)
+            for action in state.getLegalActions(pos):
+                dx, dy = state.getSuccessor(pos, action).getPacmanPosition()
+                if not walls[dx][dy]:
+                    fringe.append(((dx, dy), actions + [action]))
+        return cost
 
     def heuristic(self, state):
         """Estimates the desirability of the given state.
