@@ -44,7 +44,7 @@ class PacmanAgent(Agent):
         Returns:
             The minimax score for the current state.
         """
-        # Terminal state check: win or lose
+        # Terminal state : game is won or lost
         if state.isWin() or state.isLose():
             return state.getScore()
 
