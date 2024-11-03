@@ -28,6 +28,7 @@ class PacmanAgent(Agent):
                                      visited_states=visited_states)
                 visited_states.remove(state_key)
 
+                # Select the action with the best score
                 if score > best_score:
                     best_score = score
                     best_action = action
@@ -73,6 +74,7 @@ class PacmanAgent(Agent):
     def key(self, state):
         """Creates a unique and hashable key for a Pacman game
             state to track visited states.
+
         Arguments:
             state: a game state.
 

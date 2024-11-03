@@ -3,35 +3,30 @@ from pacman_module.util import manhattanDistance
 
 
 class PacmanAgent(Agent):
-    """Pacman agent implementing H-Minimax with alpha-beta pruning and
-       weighted path selection.
-    """
+    """Pacman agent implementing H-Minimax with path penalities."""
 
     def __init__(self):
-        """Initialize the agent with a depth limit for H-Minimax."""
         super().__init__()
         self.depth = 3  # Depth limit for the H-Minimax search
-        self.path_info = {}  # Dictionary of the path taken and a penalty
+        self.path_penality = {}  # Dictionary of the path taken and a penalty
 
     def get_action(self, state):
         """Returns the best action for Pacman in the current state."""
         best_score = float('-inf')
         best_action = None
-
-        # Iterate through all possible successors of the current state
         for successor_state, action in state.generatePacmanSuccessors():
             state_key = self.key(successor_state)
-            if state_key not in self.path_info:
-                self.path_info[state_key] = 0
-            # Add a penalty for revisiting a state
-            self.path_info[state_key] += 1
+            if state_key not in self.path_penality:
+                self.path_penality[state_key] = 0
+            self.path_penality[state_key] += 1
+
             score = self.hminimax(successor_state,
                                   agent_index=1, depth=self.depth - 1)
+
             # Select the action with the best score
             if score >= best_score:
                 best_score = score
                 best_action = action
-
         return best_action
 
     def hminimax(self, state, agent_index, depth):
@@ -53,9 +48,9 @@ class PacmanAgent(Agent):
             score = float('-inf')
             for successor, _ in state.generatePacmanSuccessors():
                 state_key = self.key(successor)
-                if state_key not in self.path_info:
-                    self.path_info[state_key] = 0
-                self.path_info[state_key] += 1
+                if state_key not in self.path_penality:
+                    self.path_penality[state_key] = 0
+                self.path_penality[state_key] += 1
 
                 score = max(score, self.hminimax(successor, 1, depth - 1))
             return score
@@ -64,9 +59,9 @@ class PacmanAgent(Agent):
             score = float('inf')
             for successor, _ in state.generateGhostSuccessors(agent_index):
                 state_key = self.key(successor)
-                if state_key not in self.path_info:
-                    self.path_info[state_key] = 0
-                self.path_info[state_key] += 1
+                if state_key not in self.path_penality:
+                    self.path_penality[state_key] = 0
+                self.path_penality[state_key] += 1
 
                 score = min(score, self.hminimax(successor, 0, depth - 1))
             return score
@@ -81,6 +76,7 @@ class PacmanAgent(Agent):
             A heuristic score representing the desirability of the state.
         """
         pacman_pos = state.getPacmanPosition()
+
         # Calculate the distance from the nearest food
         foods_list = state.getFood().asList()
         distance = set()
@@ -89,12 +85,14 @@ class PacmanAgent(Agent):
             distance.add(manhattanDistance(pacman_pos, food_pos))
         if len(distance) != 0:
             food_dist = min(distance)
+
         # Calculate distance from ghost
         ghost_pos = state.getGhostPosition(1)
         ghost_dist = manhattanDistance(pacman_pos, ghost_pos)
+
         # Penalize visited path to avoid revisiting states
         state_key = self.key(state)
-        path_penalty = self.path_info[state_key]
+        path_penalty = self.path_penality[state_key]
 
         food_priority = 1
         danger = 1
@@ -112,8 +110,10 @@ class PacmanAgent(Agent):
     def key(self, state):
         """Creates a unique and hashable key for a Pacman game
             state to track visited states.
+
         Arguments:
             state: a game state.
+
         Returns:
             A hashable key tuple representing the unique state.
         """
